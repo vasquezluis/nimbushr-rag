@@ -1,0 +1,108 @@
+NIMBUSHR - FREQUENTLY ASKED QUESTIONS
+
+=== INTEGRATIONS & TECHNICAL ===
+
+Q: Does NimbusHR support integrations with payroll providers?
+A: Yes, NimbusHR integrates with several popular payroll providers via API, including ADP, Gusto, Paychex, and Rippling. We also offer Zapier integration for connecting with 1000+ other apps.
+
+Q: What about integrations with other HR tools?
+A: NimbusHR connects with popular tools like Slack for notifications, Google Workspace and Microsoft 365 for calendar sync and SSO, BambooHR for data migration, and various ATS platforms like Greenhouse and Lever.
+
+Q: Is there an API available for custom integrations?
+A: Yes, our Pro and Enterprise plans include access to our RESTful API with comprehensive documentation. We also provide webhook support for real-time event notifications.
+
+Q: What security certifications does NimbusHR have?
+A: NimbusHR is SOC 2 Type II certified and GDPR compliant. We use 256-bit encryption for data at rest and in transit, and offer SSO via SAML 2.0.
+
+Q: Where is customer data stored?
+A: Data is stored in secure AWS data centers with multiple redundancies. US customers' data is stored in US-East regions, and we offer EU data residency for European customers on Enterprise plans.
+
+=== CUSTOMER SUPPORT ===
+
+Q: Is customer support available on weekends?
+A: Priority support is available 24/7 for Pro plan customers. Starter plan customers have access to email support during business hours (9 AM - 6 PM EST, Monday-Friday).
+
+Q: What support channels are available?
+A: We offer email support for all plans, live chat for Pro plans, and dedicated account managers for Enterprise customers. We also have a comprehensive knowledge base and video tutorials available 24/7.
+
+Q: What's your average response time?
+A: Pro plan customers receive responses within 2 hours during business hours and 4 hours after hours. Starter plan customers typically receive responses within 24 business hours.
+
+Q: Do you offer onboarding assistance?
+A: Yes! All new customers receive a guided onboarding session. Pro customers get up to 3 onboarding calls, and Enterprise customers receive dedicated implementation support with custom training sessions.
+
+=== BILLING & PLANS ===
+
+Q: Can customers change plans at any time?
+A: Yes, customers may upgrade or downgrade their plan at the end of each billing cycle. Upgrades take effect immediately, while downgrades apply at the next renewal date.
+
+Q: What payment methods do you accept?
+A: We accept all major credit cards (Visa, Mastercard, American Express) and ACH transfers for annual plans. Enterprise customers can also arrange invoice-based billing.
+
+Q: Is there a free trial available?
+A: Yes, we offer a 14-day free trial of our Pro plan with no credit card required. This gives you full access to explore all features before committing.
+
+Q: What's included in each pricing tier?
+A: Starter ($8/user/month) includes core HR features and basic reporting. Pro ($15/user/month) adds advanced analytics, custom workflows, and priority support. Enterprise (custom pricing) includes unlimited users, dedicated support, and custom integrations.
+
+Q: Are there any setup fees?
+A: No setup fees for Starter and Pro plans. Enterprise plans may include an implementation fee depending on customization requirements and data migration complexity.
+
+Q: What happens if we exceed our user limit?
+A: You'll be automatically billed for additional users at your current per-user rate. We'll notify you when you're approaching your plan limit.
+
+=== FEATURES & FUNCTIONALITY ===
+
+Q: Can employees access NimbusHR on mobile devices?
+A: Yes, we have native iOS and Android apps with full functionality including time-off requests, expense submissions, and document access.
+
+Q: Does NimbusHR support multiple languages?
+A: Currently, we support English, Spanish, French, and German. Additional languages can be added for Enterprise customers upon request.
+
+Q: Can we customize workflows and approval processes?
+A: Pro and Enterprise plans allow full customization of approval workflows for time-off, expenses, and performance reviews. You can set up multi-level approvals based on department, role, or custom criteria.
+
+Q: What reporting capabilities does NimbusHR offer?
+A: We provide 50+ pre-built reports covering headcount, turnover, time-off balances, and performance metrics. Pro and Enterprise plans include custom report builders and scheduled report delivery.
+
+Q: Does NimbusHR handle performance reviews?
+A: Yes, we offer customizable performance review cycles with 360-degree feedback, goal tracking, and competency frameworks. You can create custom review templates aligned with your company's values.
+
+Q: Can we track employee certifications and training?
+A: Absolutely. NimbusHR includes a learning management module where you can track certifications, schedule training, set expiration reminders, and maintain compliance records.
+
+=== DATA & COMPLIANCE ===
+
+Q: How do we migrate data from our current HR system?
+A: We provide CSV import templates and offer assisted migration for Pro customers. Enterprise customers receive white-glove data migration support with dedicated migration specialists.
+
+Q: Can we export our data at any time?
+A: Yes, you can export all your data in CSV or JSON format at any time. There are no restrictions or additional fees for data exports.
+
+Q: How long is data retained after account cancellation?
+A: Data is retained for 90 days after cancellation, during which you can reactivate or export. After 90 days, all data is permanently deleted from our systems.
+
+Q: Is NimbusHR compliant with labor laws in different states/countries?
+A: NimbusHR is designed to support US federal labor laws and includes state-specific configurations for all 50 states. International compliance features are available for Enterprise customers.
+
+=== EMPLOYEE MANAGEMENT ===
+
+Q: How many employee records can we store?
+A: Starter plan supports up to 100 employees, Pro up to 500 employees. Enterprise plans support unlimited employees.
+
+Q: Can employees update their own information?
+A: Yes, employees can update personal information, emergency contacts, and banking details through self-service portals. Administrators can configure which fields are employee-editable.
+
+Q: Does NimbusHR support contractor management?
+A: Yes, you can manage both W2 employees and 1099 contractors in the system with different permission levels and documentation requirements.
+
+=== GENERAL ===
+
+Q: How often is NimbusHR updated?
+A: We release feature updates monthly and security patches as needed. All updates are applied automatically with no downtime required.
+
+Q: Do you offer training resources?
+A: Yes, we provide video tutorials, documentation, weekly webinars, and an online community forum. Enterprise customers receive custom training sessions for their teams.
+
+Q: What if we need a feature that doesn't exist?
+A: We actively collect feature requests and prioritize our roadmap based on customer feedback. Enterprise customers can request custom feature development for additional fees.
