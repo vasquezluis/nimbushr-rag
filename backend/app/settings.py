@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     # WARNING: Setting this to True will use GPT-4o for every chunk with tables/images
     use_ai_summarization: bool = True
 
+    # ======================
+    # Retriever Config
+    # ======================
+    top_k_value: int = 2
+
     # Only use AI summarization for chunks with this many tables or more
     ai_summary_min_tables: int = 2
 
@@ -64,6 +69,7 @@ class Settings(BaseSettings):
     # ======================
     # ChromaDB Config
     # ======================
+    clear_existing: bool = True
     chroma_collection_name: str = "nimbus_hr_docs"
     chroma_distance_metric: str = "cosine"  # Options: "cosine", "l2", "ip"
 
