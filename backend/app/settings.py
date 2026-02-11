@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     # ======================
     # Retriever Config
     # ======================
-    top_k_value: int = 2
+    top_k_value: int = 3
 
     # Only use AI summarization for chunks with this many tables or more
     ai_summary_min_tables: int = 2

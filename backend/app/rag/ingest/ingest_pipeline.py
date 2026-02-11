@@ -4,7 +4,6 @@ Orchestrates the complete RAG ingestion
 """
 
 from typing import List
-from settings import settings
 from langchain_core.documents import Document
 
 from loaders.pdf_loader import load_pdfs_from_directory

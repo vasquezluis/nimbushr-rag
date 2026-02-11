@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from dotenv import load_dotenv
 from settings import settings
-from rag.ingest.ingest import run_complete_ingestion_pipeline
+from backend.app.rag.ingest.ingest_pipeline import run_complete_ingestion_pipeline
 
 # Load environment variables
 load_dotenv()
