@@ -3,26 +3,7 @@
 import { format } from "date-fns";
 import { User, Bot, FileText, Table, Image, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  sources?: Array<{
-    file: string;
-    chunk_index: number;
-    has_tables: boolean;
-    has_images: boolean;
-    ai_summarized: boolean;
-  }>;
-  isStreaming?: boolean;
-}
-
-interface MessageBubbleProps {
-  message: Message;
-  isLatest?: boolean;
-}
+import { MessageBubbleProps } from "@/types/chat";
 
 export function MessageBubble({ message, isLatest }: MessageBubbleProps) {
   const isUser = message.role === "user";

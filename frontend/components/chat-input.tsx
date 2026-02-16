@@ -4,13 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Square } from "lucide-react";
+import { ChatInputProps } from "@/types/chat";
 
-interface ChatInputProps {
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
-}
-
-export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  isLoading,
+  onCancel,
+}: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -75,9 +75,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         {/* Send/Stop Button */}
         {isLoading ? (
           <Button
-            onClick={() => {
-              /* TODO: Implement cancel streaming */
-            }}
+            onClick={onCancel}
             size="icon"
             className="
               h-14 w-14 rounded-2xl shrink-0

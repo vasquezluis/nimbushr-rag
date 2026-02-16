@@ -3,21 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageList } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  sources?: Array<{
-    file: string;
-    chunk_index: number;
-    has_tables: boolean;
-    has_images: boolean;
-    ai_summarized: boolean;
-  }>;
-  isStreaming?: boolean;
-}
+import { useStreamingQuery } from "@/hooks/use-streaming-query";
+import { Message } from "@/types/chat";
 
 export function ChatArea() {
   const [messages, setMessages] = useState<Message[]>([
@@ -25,14 +12,22 @@ export function ChatArea() {
       id: "1",
       role: "assistant",
       content:
-        "Hello! I'm your RAG Assistant. I can help you find information from your documents. Ask me anything about employee benefits, policies, or procedures.",
+        "Hello! I'm your NimusHR Assistant. I can help you find information from your documents. Ask me anything about employee benefits, policies, or procedures.",
       timestamp: new Date(),
     },
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(
-    null,
-  ) as React.RefObject<HTMLDivElement>;
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    sendStreamingQuery,
+    cancel,
+    isStreaming,
+    error,
+    streamingAnswer,
+    sources,
+    status,
+  } = useStreamingQuery();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,7 +35,75 @@ export function ChatArea() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamingAnswer]);
+
+  // Update streaming message in real-time
+  useEffect(() => {
+    if (isStreaming && streamingAnswer) {
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+
+        // If last message is assistant and streaming, update it
+        if (lastMessage?.role === "assistant" && lastMessage?.isStreaming) {
+          return [
+            ...prev.slice(0, -1),
+            {
+              ...lastMessage,
+              content: streamingAnswer,
+              sources: sources.length > 0 ? sources : lastMessage.sources,
+            },
+          ];
+        }
+
+        // Otherwise, create new streaming message
+        return [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: streamingAnswer,
+            timestamp: new Date(),
+            sources: sources.length > 0 ? sources : undefined,
+            isStreaming: true,
+          },
+        ];
+      });
+    }
+  }, [isStreaming, streamingAnswer, sources]);
+
+  // Finalize message when streaming completes
+  useEffect(() => {
+    if (!isStreaming && streamingAnswer) {
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.isStreaming) {
+          return [
+            ...prev.slice(0, -1),
+            {
+              ...lastMessage,
+              isStreaming: false,
+            },
+          ];
+        }
+        return prev;
+      });
+    }
+  }, [isStreaming, streamingAnswer]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `Error: ${error}`,
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, [error]);
 
   const handleSendMessage = async (content: string) => {
     // Add user message
@@ -52,37 +115,13 @@ export function ChatArea() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
 
-    // Simulate streaming response
-    // TODO: Replace with actual streaming API call
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "This is a placeholder response. Connect your streaming API endpoint to see real-time token streaming. The response will appear word by word as it's generated.",
-        timestamp: new Date(),
-        sources: [
-          {
-            file: "employee_handbook.pdf",
-            chunk_index: 5,
-            has_tables: true,
-            has_images: false,
-            ai_summarized: true,
-          },
-          {
-            file: "benefits_guide.pdf",
-            chunk_index: 12,
-            has_tables: false,
-            has_images: true,
-            ai_summarized: false,
-          },
-        ],
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 1000);
+    // Start streaming
+    await sendStreamingQuery(content);
+  };
+
+  const handleCancelStreaming = () => {
+    cancel();
   };
 
   return (
@@ -91,14 +130,19 @@ export function ChatArea() {
       <div className="flex-1 overflow-hidden">
         <MessageList
           messages={messages}
-          isLoading={isLoading}
-          messagesEndRef={messagesEndRef}
+          isLoading={isStreaming}
+          messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
+          status={status}
         />
       </div>
 
       {/* Input Area */}
       <div className="border-t border-white/5 bg-[#0A0A0A]">
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          isLoading={isStreaming}
+          onCancel={handleCancelStreaming}
+        />
       </div>
     </div>
   );
