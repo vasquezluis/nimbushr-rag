@@ -21,13 +21,14 @@ export function MarkdownRenderer({
           ),
           h2: ({ node, ...props }) => (
             <h2
-              className="text-lg font-bold text-white/90 mt-5 mb-3 first:mt-0"
+              className="text-lg font-bold text-white/95 mt-8 mb-3 first:mt-0 border-b border-white/10 pb-1"
               {...props}
             />
           ),
+
           h3: ({ node, ...props }) => (
             <h3
-              className="text-base font-semibold text-white/90 mt-4 mb-2 first:mt-0"
+              className="text-base font-semibold text-white/90 mt-6 mb-2 first:mt-0 tracking-wide"
               {...props}
             />
           ),
@@ -65,21 +66,22 @@ export function MarkdownRenderer({
 
           // Code blocks
           // biome-ignore lint/suspicious/noExplicitAny: Change type to anything else someday
-          code: ({ node, inline, className, children, ...props }: any) => {
+          code: ({ inline, className, children, ...props }: any) => {
             if (inline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded bg-white/10 text-blue-300 font-mono text-sm border border-white/20"
+                  className="px-1.5 py-0.5 rounded bg-white/10 text-blue-300 font-mono text-[0.85rem] border border-white/15"
                   {...props}
                 >
                   {children}
                 </code>
               );
             }
+
             return (
               <code
                 className={cn(
-                  "block px-4 py-3 rounded-lg bg-black/40 text-green-300 font-mono text-sm overflow-x-auto border border-white/10 my-3",
+                  "block font-mono text-[0.85rem] leading-relaxed text-green-300",
                   className,
                 )}
                 {...props}
@@ -88,8 +90,12 @@ export function MarkdownRenderer({
               </code>
             );
           },
-          pre: ({ node, ...props }) => (
-            <pre className="overflow-x-auto my-3" {...props} />
+
+          pre: ({ ...props }) => (
+            <pre
+              className="my-4 rounded-xl bg-black/50 border border-white/10 shadow-inner overflow-x-auto"
+              {...props}
+            />
           ),
 
           // Blockquotes
@@ -139,8 +145,11 @@ export function MarkdownRenderer({
           ),
 
           // Horizontal rule
-          hr: ({ node, ...props }) => (
-            <hr className="my-6 border-white/10" {...props} />
+          hr: ({ ...props }) => (
+            <hr
+              className="my-8 border-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent"
+              {...props}
+            />
           ),
 
           // Strong/Bold

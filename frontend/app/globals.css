@@ -196,8 +196,6 @@
     @apply hover:bg-white/10 hover:border-white/20 transition-all duration-300;
   }
 
-  /* Add this to your frontend/app/globals.css file */
-
   /* Markdown Content Styles */
   .markdown-content {
     color: rgb(255 255 255 / 0.9);
@@ -206,13 +204,17 @@
   }
 
   /* Ensure list items display correctly */
-  .markdown-content ol,
-  .markdown-content ul {
-    list-style-position: outside;
+  .markdown-content ul,
+  .markdown-content ol {
+    padding-left: 1.25rem;
   }
 
   .markdown-content li {
-    display: list-item;
+    margin-bottom: 0.25rem;
+  }
+
+  .markdown-content li:last-child {
+    margin-bottom: 0;
   }
 
   /* Nested lists */
@@ -236,10 +238,15 @@
     margin-top: 0.5em;
   }
 
-  /* Code block scrolling */
   .markdown-content pre {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 0;
+    background: transparent;
+  }
+
+  .markdown-content pre code {
+    display: block;
+    padding: 1rem;
   }
 
   /* Table responsiveness */
@@ -252,5 +259,75 @@
   /* Prevent layout shift */
   .markdown-content * {
     box-sizing: border-box;
+  }
+
+  /* Vertical rhythm */
+  .markdown-content > * + * {
+    margin-top: 1rem;
+  }
+
+  /* Tighter spacing inside lists and blockquotes */
+  .markdown-content li > * + * {
+    margin-top: 0.35rem;
+  }
+
+  .markdown-content blockquote > * + * {
+    margin-top: 0.5rem;
+  }
+
+  .markdown-content {
+    max-width: 72ch;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    vertical-align: top;
+  }
+
+  .markdown-content td {
+    word-break: break-word;
+  }
+
+  .markdown-content table {
+    font-size: 0.875rem;
+  }
+
+  .markdown-content thead th {
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(6px);
+  }
+
+  .markdown-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .markdown-content figure {
+    margin: 1.5rem 0;
+  }
+
+  .markdown-content a {
+    transition:
+      color 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .markdown-content tr {
+    transition: background-color 0.15s ease;
+  }
+
+  .markdown-content sup {
+    font-size: 0.75rem;
+    color: rgb(96 165 250);
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4 {
+    scroll-margin-top: 5rem;
   }
 }

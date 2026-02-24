@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # ======================
     llm_model: str = "gpt-4o"
     llm_temperature: float = 0
-    llm_max_tokens: int = 2048  # 4096
+    llm_max_tokens: int = 4096
 
     # ======================
     # PDF Processing Config

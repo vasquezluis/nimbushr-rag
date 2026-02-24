@@ -75,7 +75,7 @@ def rerank_chunks(chunks: List, query: str, top_n: int = 3) -> List:
         from sentence_transformers import CrossEncoder
 
         # Load cross-encoder model for reranking
-        model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        model = CrossEncoder(settings.cross_encoder_model)
 
         # Prepare pairs for scoring
         pairs = [[query, chunk.page_content] for chunk in chunks]
@@ -214,6 +214,7 @@ INSTRUCTIONS:
 - Be specific — use concrete values and details from the documents.
 - If information is insufficient, clearly state what is missing.
 - If sources conflict, acknowledge the discrepancy and explain both sides.
+- Answer must be in markdown format so that the frontend displays it nicely.
 
 ANSWER:"""
 

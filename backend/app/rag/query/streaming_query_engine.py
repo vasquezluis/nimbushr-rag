@@ -244,11 +244,22 @@ ANSWER:"""
         message = HumanMessage(content=prompt_text)
 
         # Stream tokens from the LLM
+        finish_reason = None
+
         async for chunk in llm.astream([message]):
             if chunk.content:
                 yield {"type": "token", "data": chunk.content}
+            # Capture finish_reason from response metadata
+            if hasattr(chunk, "response_metadata") and chunk.response_metadata:
+                finish_reason = chunk.response_metadata.get("finish_reason")
 
-        # Signal completion
+        # Signal completion — warn frontend if truncated
+        if finish_reason == "length":
+            yield {
+                "type": "token",
+                "data": "\n\n⚠️ *Response was truncated due to length limits.*",
+            }
+
         yield {"type": "done", "data": None}
 
     except Exception as e:
