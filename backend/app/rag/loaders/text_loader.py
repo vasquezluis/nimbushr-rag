@@ -126,6 +126,110 @@ def _parse_text(content: str, filename: str, max_chars: int) -> List[TextChunk]:
 
     return chunks
 
+def _parse_faq(content: str, filename: str, max_chars: int) -> List[TextChunk]:
+    """
+    Parse FAQ-style .txt files with Q:/A: patterns.
+    Each Q+A pair becomes its own chunk, preserving the section header as context.
+
+    Handles formats like:
+        === SECTION HEADER ===
+        Q: question text
+        A: answer text
+    """
+    import re
+
+    chunks: List[TextChunk] = []
+    current_section = "General"
+    chunk_index = 0
+
+    # Split into lines for processing
+    lines = content.splitlines()
+    i = 0
+
+    # Buffer to accumulate a Q+A pair
+    current_q: str | None = None
+    current_a_lines: list[str] = []
+
+    def _flush(section: str, q: str, a_lines: list[str], idx: int) -> TextChunk | None:
+        a_text = " ".join(a_lines).strip()
+        if not q or not a_text:
+            return None
+        pair_text = f"Q: {q.strip()}\nA: {a_text}"
+        for part in _split_by_size(pair_text, max_chars):
+            return TextChunk(
+                text=part,
+                section_title=section,
+                page_number=idx + 1,
+                source_file=filename,
+                source_type="text",
+            )
+
+    section_re = re.compile(r"^={2,}\s*(.+?)\s*={2,}$")
+    q_re = re.compile(r"^Q:\s*(.+)$")
+    a_re = re.compile(r"^A:\s*(.*)$")
+
+    while i < len(lines):
+        line = lines[i].strip()
+
+        # Detect section headers like === FEATURES & FUNCTIONALITY ===
+        section_match = section_re.match(line)
+        if section_match:
+            # Flush any pending Q+A before switching section
+            if current_q is not None:
+                chunk = _flush(current_section, current_q, current_a_lines, chunk_index)
+                if chunk:
+                    chunks.append(chunk)
+                    chunk_index += 1
+                current_q = None
+                current_a_lines = []
+            current_section = section_match.group(1).title()
+            i += 1
+            continue
+
+        # Detect Q:
+        q_match = q_re.match(line)
+        if q_match:
+            # Flush previous pair
+            if current_q is not None:
+                chunk = _flush(current_section, current_q, current_a_lines, chunk_index)
+                if chunk:
+                    chunks.append(chunk)
+                    chunk_index += 1
+            current_q = q_match.group(1)
+            current_a_lines = []
+            i += 1
+            continue
+
+        # Detect A:
+        a_match = a_re.match(line)
+        if a_match:
+            current_a_lines = [a_match.group(1)]
+            i += 1
+            # Collect continuation lines (indented or non-empty, non-Q lines)
+            while i < len(lines):
+                next_line = lines[i].strip()
+                if not next_line or q_re.match(next_line) or section_re.match(next_line):
+                    break
+                current_a_lines.append(next_line)
+                i += 1
+            continue
+
+        i += 1
+
+    # Flush last pair
+    if current_q is not None:
+        chunk = _flush(current_section, current_q, current_a_lines, chunk_index)
+        if chunk:
+            chunks.append(chunk)
+
+    return chunks
+
+
+def _is_faq_file(content: str) -> bool:
+    """Detect if a .txt file uses Q:/A: FAQ format."""
+    import re
+    qa_pairs = re.findall(r"^Q:\s.+", content, re.MULTILINE)
+    return len(qa_pairs) >= 3  # at least 3 Q: lines = FAQ format
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -145,6 +249,11 @@ def load_text_file(file_path: Path) -> List[TextChunk]:
 
     if suffix == ".md":
         return _parse_markdown(content, file_path.name, max_chars)
+
+    # Auto-detect FAQ format before falling back to generic paragraph splitting
+    if _is_faq_file(content):
+        return _parse_faq(content, file_path.name, max_chars)
+
     return _parse_text(content, file_path.name, max_chars)
 
 

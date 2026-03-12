@@ -158,74 +158,39 @@ def retrieve_chunks_from_graph(
     index_scores: dict[int, float] = {}
     matched_nodes: list[dict] = []
 
+    direct_match_indices: set[int] = set()
     for entity in entities:
         entity_name = _normalize_name(entity["name"])
         entity_type = entity.get("type", "")
         matching_nodes = find_matching_nodes(graph, entity_name, entity_type)
-
-        if not matching_nodes:
-            print(f"  Graph: no match for '{entity_name}'")
-            continue
-
         for node_id in matching_nodes:
-            print(f"  Graph: '{entity_name}' → matched node '{node_id}'")
-            node_chunks = graph.nodes[node_id].get("chunk_indices", [])
+            for idx in graph.nodes[node_id].get("chunk_indices", []):
+                direct_match_indices.add(idx)
 
-            # Specificity: nodes with fewer chunks are more precise.
-            # "Week 3 Goals" (1 chunk) scores 1.0, "onboarding.md" (33 chunks) scores 0.03
-            specificity = 1.0 / max(len(node_chunks), 1)
-
-            # Score the node's own chunks at full weight
-            for idx in node_chunks:
-                index_scores[idx] = index_scores.get(idx, 0.0) + specificity
-
-            # Score neighbor chunks at half weight
-            for neighbor in list(graph.successors(node_id)) + list(graph.predecessors(node_id)):
-                neighbor_chunks = graph.nodes[neighbor].get("chunk_indices", [])
-                neighbor_specificity = 0.5 / max(len(neighbor_chunks), 1)
-                for idx in neighbor_chunks:
-                    index_scores[idx] = index_scores.get(idx, 0.0) + neighbor_specificity
-
-            # Collect neighbor info for frontend visualization
-            neighbors = []
-            for neighbor in graph.successors(node_id):
-                neighbors.append(
-                    {
-                        "name": neighbor,
-                        "relation": graph.edges[node_id, neighbor].get(
-                            "relations", ["related_to"]
-                        )[0],
-                        "direction": "outgoing",
-                    }
-                )
-            for neighbor in graph.predecessors(node_id):
-                neighbors.append(
-                    {
-                        "name": neighbor,
-                        "relation": graph.edges[neighbor, node_id].get(
-                            "relations", ["related_to"]
-                        )[0],
-                        "direction": "incoming",
-                    }
-                )
-
-            matched_nodes.append(
-                {
-                    "name": node_id,
-                    "entity_type": graph.nodes[node_id].get("entity_type", "Unknown"),
-                    "query_entity": entity_name,
-                    "chunk_indices": list(node_chunks),
-                    "neighbors": neighbors[:8],
-                }
-            )
-
-    # Sort indices by score — most specific/referenced first
+    # Sort all indices by score
     ranked_indices = sorted(
         index_scores.keys(),
         key=lambda i: index_scores[i],
         reverse=True,
     )
-    result_indices = ranked_indices[:max_chunks]
+
+    # Build result: direct matches first (guaranteed), then fill with top-scored
+    result_indices: list[int] = []
+    seen: set[int] = set()
+
+    for idx in direct_match_indices:
+        if idx not in seen:
+            result_indices.append(idx)
+            seen.add(idx)
+
+    for idx in ranked_indices:
+        if len(result_indices) >= max_chunks:
+            break
+        if idx not in seen:
+            result_indices.append(idx)
+            seen.add(idx)
+
+    result_indices = result_indices[:max_chunks]
 
     print(f"  Graph: returning {len(result_indices)} chunk indices → {result_indices}")
     return {"chunk_indices": result_indices, "matched_nodes": matched_nodes}

@@ -123,13 +123,15 @@ def hybrid_retrieve(
             if doc:
                 graph_source = doc.metadata.get("source_file")
                 if graph_source not in vector_source_files:
-                    # New source file the vector missed → worth including
+                    # New source file the vector missed → include
                     scores[idx] = scores.get(idx, 0) + 1
                 else:
-                    # Same source file — previously scored 0 (excluded).
-                    # Now give +1 so specific graph matches can still surface.
-                    # The reranker will demote truly irrelevant ones afterward.
-                    scores[idx] = scores.get(idx, 0) + 1
+                    # Same source file — check if this came from a specific node
+                    # (small node = precise match, should not be suppressed)
+                    is_specific_match = _is_specific_graph_match(graph, idx)
+                    if is_specific_match:
+                        scores[idx] = scores.get(idx, 0) + 1
+                    # else: score stays 0 → excluded (likely redundant)
 
     # Sort by score, remove zero-score graph-only same-source chunks
     ordered_indices = sorted(
@@ -159,3 +161,17 @@ def hybrid_retrieve(
         "chunks": final_chunks,
         "graph_traversal": graph_traversal,
     }
+
+def _is_specific_graph_match(graph: Optional[nx.Graph], chunk_idx: int, specificity_threshold: int = 3) -> bool:
+    """
+    Returns True if this chunk_idx belongs to a small/specific graph node.
+    Small nodes (few chunks) = precise matches that should not be suppressed
+    by the same-source-file exclusion rule.
+    """
+    if graph is None:
+        return False
+    for node, data in graph.nodes(data=True):
+        node_chunks = data.get("chunk_indices", [])
+        if chunk_idx in node_chunks and len(node_chunks) <= specificity_threshold:
+            return True
+    return False
