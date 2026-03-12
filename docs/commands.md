@@ -11,11 +11,18 @@ cp .env.example .env   # add OPENAI_API_KEY
 
 ## Ingest documents
 
+Place files in the appropriate directory, then run:
+
 ```bash
-# Place files in backend/data/pdfs|excels|texts, then:
 cd backend
 uv run python -m app.ingest
 ```
+
+| File type       | Directory              |
+| --------------- | ---------------------- |
+| PDFs            | `backend/data/pdfs/`   |
+| Excel / CSV     | `backend/data/excels/` |
+| Text / Markdown | `backend/data/texts/`  |
 
 ## Run backend
 
@@ -35,14 +42,25 @@ pnpm run dev
 # http://localhost:3000
 ```
 
-## Key env vars (.env)
+---
 
-```
+## Key env vars
+
+```bash
+# Required
 OPENAI_API_KEY=sk-...
 
-# Optional overrides
-USE_AI_SUMMARIZATION=false   # disable to save cost during testing
-PDF_STRATEGY=fast             # fast | hi_res | ocr_only
-TOP_K_CHUNKS=3
+# Backend selectors (default values shown)
+VECTOR_STORE_BACKEND=chroma      # chroma | postgres
+GRAPH_STORE_BACKEND=networkx     # networkx | neo4j
+
+# Cost control
+USE_AI_SUMMARIZATION=false       # disable to save cost during testing
+PDF_STRATEGY=fast                # fast | hi_res | ocr_only
+
+# Retrieval
+TOP_K_CHUNKS=5
+RETRIEVAL_K=8
 USE_RERANKING=true
+USE_MMR=true
 ```

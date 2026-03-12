@@ -1,146 +1,107 @@
-# Architecture
+# Project Structure
 
-## Query flow
-
-```
-User Question
-     ↓
-     ├── Vector Search (ChromaDB + MMR)
-     │        ↓
-     │   Semantic chunks (by similarity)
-     │
-     └── Graph Retrieval (NetworkX)
-              ↓
-         Entity extraction from query
-              ↓
-         Fuzzy node matching
-              ↓
-         Neighbor traversal (1 hop)
-              ↓
-         Chunk indices → fetch from ChromaDB
-
-         Both results
-              ↓
-         Hybrid Merger
-         (scoring + dedup)
-               ↓
-         Reranker (cross-encoder)
-               ↓
-         LLM (GPT-4o, streaming)
-               ↓
-         Answer + Sources + Graph Traversal
-```
-
----
-
-## Hybrid scoring logic
-
-```
-Vector result:                    +2  (reliable semantic baseline)
-Graph + Vector agree (both):      +4  (highest confidence)
-Graph only, NEW source file:      +1  (graph found something vector missed)
-Graph only, SAME source file:      0  (likely redundant, excluded)
-```
-
----
-
-## Ingestion flow
-
-```
-PDFs                    Excel / CSV             Text / Markdown
-  ↓                          ↓                       ↓
-partition_pdf           load_excel_file         load_text_file
-  ↓                          ↓                       ↓
-chunk_by_title          chunk_excel_sheets      parse_markdown /
-  ↓                          ↓                  parse_text
-AI summarizer                ↓                       ↓
-(tables + images)      create_excel_documents  create_text_documents
-  ↓                          ↓                       ↓
-            all_documents (LangChain Documents)
-                             ↓
-                  ┌──────────┴───────────┐
-                  ↓                      ↓
-            Vector Store           Knowledge Graph
-            (ChromaDB)             (NetworkX → JSON)
-            chroma_db/             graph_db/knowledge_graph.json
-```
-
----
-
-## Project structure
+## Directory layout
 
 ```
 backend/
-    app/
-    ├── core/                          ← NEW: abstractions (interfaces/protocols)
-    │   ├── interfaces/
-    │   │   ├── vector_store.py        # AbstractVectorStore protocol
-    │   │   ├── graph_store.py         # AbstractGraphStore protocol
-    │   │   └── embedder.py            # AbstractEmbedder protocol
-    │   └── models.py                  # Shared domain models (ChunkResult, etc.)
-    │
-    ├── infrastructure/                ← NEW: concrete implementations
-    │   ├── vector_stores/
-    │   │   ├── chroma.py              # ChromaVectorStore (current logic moved here)
-    │   │   └── postgres.py            # PgVectorStore (future, just skeleton)
-    │   ├── graph_stores/
-    │   │   ├── networkx_store.py      # NetworkXGraphStore (current logic moved here)
-    │   │   └── neo4j_store.py         # Neo4jGraphStore (future skeleton)
-    │   └── embedders/
-    │       └── openai_embedder.py     # OpenAIEmbedder
-    │
-    ├── services/                      ← NEW: orchestration (replaces scattered pipeline files)
-    │   ├── ingest_service.py          # Calls loaders → chunkers → embedder → vector_store → graph_store
-    │   └── query_service.py           # Calls vector_store + graph_store → reranker → LLM
-    │
-    ├── rag/                           ← KEEP (mostly unchanged internal logic)
-    │   ├── loaders/                   # unchanged
-    │   ├── chunkers/                  # unchanged
-    │   ├── ingest/                    # ai_summarizer.py stays; vector_store.py removed
-    │   ├── query/                     # streaming_query_engine.py stays; vector_store.py removed
-    │   └── graph/                     # entity_extractor, knowledge_graph internals stay
-    │
-    ├── api/v1/routes/                 # unchanged — depends on services, not storage
-    ├── deps.py                        # UPDATED: returns AbstractVectorStore, not Chroma
-    ├── settings.py                    # ADD: VECTOR_STORE_BACKEND = "chroma" | "postgres"
-    └── main.py                        # UPDATED: uses factory to init correct stores
+├── app/
+│   ├── core/                        # Abstractions — no third-party imports
+│   │   ├── models.py                # Shared data types (Chunk, HybridRetrievalResult)
+│   │   └── interfaces/
+│   │       ├── vector_store.py      # VectorStoreProtocol
+│   │       └── graph_store.py       # GraphStoreProtocol
+│   │
+│   ├── infrastructure/              # Concrete backend implementations
+│   │   ├── factory.py               # Wires up backends from settings
+│   │   ├── vector_stores/
+│   │   │   ├── chroma.py            # ChromaDB (active)
+│   │   │   └── postgres.py          # pgvector (skeleton)
+│   │   └── graph_stores/
+│   │       ├── networkx_store.py    # NetworkX + JSON (active)
+│   │       └── neo4j_store.py       # Neo4j (skeleton)
+│   │
+│   ├── services/                    # Orchestration — owns the pipelines
+│   │   ├── ingest_service.py        # Load → chunk → embed → store
+│   │   └── query_service.py         # Retrieve → rerank → stream
+│   │
+│   ├── rag/                         # Internal processing logic (no storage)
+│   │   ├── loaders/                 # pdf_loader, excel_loader, text_loader
+│   │   ├── chunkers/                # pdf_processor, excel_processor, text_processor
+│   │   ├── ingest/
+│   │   │   ├── ai_summarizer.py     # GPT-4o summaries for complex chunks
+│   │   │   └── content_analyzer.py  # Extracts tables, images, section titles
+│   │   ├── query/
+│   │   │   └── streaming_query_engine.py  # Reranker + LLM streaming
+│   │   └── graph/
+│   │       ├── entity_extractor.py  # LLM entity/relationship extraction
+│   │       ├── knowledge_graph.py   # Graph build, merge, save, load
+│   │       └── graph_retriever.py   # Fuzzy node match + neighbor traversal
+│   │
+│   ├── api/
+│   │   ├── deps.py                  # get_query_service() FastAPI dependency
+│   │   └── v1/routes/
+│   │       ├── query.py             # /query and /query/stream endpoints
+│   │       └── files.py             # /files endpoints
+│   │
+│   ├── main.py                      # FastAPI app + lifespan startup
+│   ├── ingest.py                    # Ingestion entry point (CLI)
+│   ├── limiter.py                   # Rate limiting
+│   └── settings.py                  # All config (Pydantic + .env)
+│
 ├── data/
 │   ├── pdfs/
 │   ├── excels/
 │   └── texts/
-├── chroma_db/                               # Vector store (auto-created)
-├── graph_db/                                # Graph store (auto-created)
-│   └── knowledge_graph.json
+├── vector_db/                       # Auto-created by active vector store backend
+├── graph_db/                        # Auto-created by active graph store backend
 └── tests/
-    └── simple_graph_test.py
 
 frontend/
 ├── app/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
-├── components/
-│   ├── chat-area.tsx                      # Main chat orchestrator
-│   ├── chat-input.tsx                     # Message input + rate limit UI
-│   ├── message-list.tsx                   # Scrollable message list
-│   ├── message-bubble.tsx                 # Single message (user + assistant)
-│   ├── markdown-renderer.tsx              # Renders LLM markdown responses
-│   ├── sources.tsx                        # Collapsible sources section
-│   ├── graph-traversal.tsx                # Collapsible graph nodes + edges
-│   ├── document-panel.tsx                 # Right panel: file list + viewers
-│   ├── pdf-viewer.tsx
-│   ├── csv-viewer.tsx
-│   ├── excel-viewer.tsx
-│   └── text-viewer.tsx
-├── hooks/
-│   ├── use-streaming-query.ts             # SSE streaming + state management
-│   ├── use-files.ts
-│   └── use-mobile.ts
-├── api/
-│   ├── query.ts                           # streamQuery, sendQuery, RateLimitError
-│   └── files.ts
-└── types/
-    ├── chat.ts                            # Message, MessageListProps, etc.
-    ├── query.ts                           # StreamEvent, GraphNode, Source, etc.
-    └── files.ts
+├── components/                      # chat, message, sources, graph-traversal, document viewers
+├── hooks/                           # use-streaming-query, use-files
+├── api/                             # query.ts, files.ts
+└── types/                           # chat.ts, query.ts, files.ts
+```
+
+---
+
+## Query flow
+
+```
+User question
+     ↓
+QueryService._hybrid_retrieve()
+     ├── VectorStore.similarity_search()   → semantic chunks
+     └── GraphStore.retrieve()             → entity-linked chunk indices
+              ↓
+         Hybrid scorer (vector + graph)
+              ↓
+         Reranker (cross-encoder)
+              ↓
+         LLM — streaming answer
+              ↓
+     Answer + Sources + Graph Traversal
+```
+
+## Ingestion flow
+
+```
+PDFs / Excel / Text files
+     ↓
+IngestService.run()
+     ├── Loaders      → raw content
+     ├── Chunkers     → LangChain Documents
+     ├── AI Summarizer (optional, PDF only)
+     ├── GraphStore.build()    → entity graph persisted
+     └── VectorStore.build()   → embeddings persisted
+```
+
+## Hybrid scoring
+
+```
+Vector result only              +2
+Graph + Vector agree            +4   (highest confidence)
+Graph only, new source file     +1   (cross-document discovery)
+Graph only, same source file     0   (excluded — likely redundant)
 ```
