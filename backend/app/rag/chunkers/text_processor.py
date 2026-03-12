@@ -59,7 +59,14 @@ def create_text_documents(
                 "source_type": chunk.source_type,  # "text" | "markdown"
             }
 
-            documents.append(Document(page_content=chunk.text, metadata=metadata))
+            # Prepend section title so the embedding captures the topic
+            titled_content = (
+                f"{chunk.section_title}\n\n{chunk.text}"
+                if chunk.section_title
+                else chunk.text
+            )
+            documents.append(Document(page_content=titled_content, metadata=metadata))
+
             global_chunk_index += 1
 
         print(f"  Created {len(chunks)} chunk(s) from {filename}")

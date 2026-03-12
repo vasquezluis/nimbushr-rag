@@ -39,7 +39,7 @@ def _fetch_chunks_by_indices(db: Chroma, chunk_indices: list[int]) -> list[Docum
         return []
 
     results = db._collection.get(
-        where={"chunk_index": {"$in": chunk_indices}},
+        where={"chunk_index": {"$in": [int(i) for i in chunk_indices]}},  # int
         include=["documents", "metadatas"],
     )
 

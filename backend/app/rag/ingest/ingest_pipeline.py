@@ -41,6 +41,7 @@ def run_complete_ingestion_pipeline() -> object:
     print("=" * 50)
 
     all_documents: List[Document] = []
+    global_chunk_index = 0 # single counter for all chunks
 
     # ── PDFs ──────────────────────────────────────────────────────────────────
     pdfs = load_pdfs_from_directory()
@@ -56,6 +57,8 @@ def run_complete_ingestion_pipeline() -> object:
             for doc in summarised_chunks:
                 doc.metadata["source_file"] = filename
                 doc.metadata["source_type"] = "pdf"
+                doc.metadata["chunk_index"] = global_chunk_index
+                global_chunk_index += 1
 
             all_documents.extend(summarised_chunks)
             print(f"  → {len(summarised_chunks)} chunks")
@@ -71,6 +74,9 @@ def run_complete_ingestion_pipeline() -> object:
             print(f"\n  Excel: {filename} ({len(sheets)} sheet(s))")
 
             docs = create_excel_documents(sheets, filename)
+            for doc in docs:
+                doc.metadata["chunk_index"] = global_chunk_index
+                global_chunk_index += 1
             all_documents.extend(docs)
     else:
         print("No Excel/CSV files found — skipping Excel ingestion.")
@@ -81,6 +87,9 @@ def run_complete_ingestion_pipeline() -> object:
     if text_files:
         print(f"\nProcessing {len(text_files)} text/markdown file(s)...")
         text_docs = create_text_documents(text_files)
+        for doc in text_docs:
+            doc.metadata["chunk_index"] = global_chunk_index
+            global_chunk_index += 1
         all_documents.extend(text_docs)
     else:
         print("No .txt / .md files found — skipping text ingestion.")
@@ -101,6 +110,7 @@ def run_complete_ingestion_pipeline() -> object:
     for doc in all_documents:
         chunk_index = doc.metadata.get("chunk_index", 0)
         source_file = doc.metadata.get("source_file", "unknown")
+        source_type = doc.metadata.get("source_type", "pdf")
 
         result = extract_entities_from_chunk(
             chunk_text=doc.page_content,
@@ -109,9 +119,13 @@ def run_complete_ingestion_pipeline() -> object:
         )
 
         # inject section_title as an entity if it exists
-        # This ensures section headings are always findable in the graph
-        # even if the LLM didn't extract them from the chunk content
         section_title = doc.metadata.get("section_title")
+
+        # Excel section_title is "filename › SheetName" — strip filename prefix for the graph
+        # The node is just "SheetName", which is matchable from queries
+        if source_type == "excel" and section_title and "›" in section_title:
+            section_title = section_title.split("›", 1)[-1].strip()
+
         if section_title and section_title != "Unknown Section":
             result["entities"].append(
                 {
@@ -120,7 +134,6 @@ def run_complete_ingestion_pipeline() -> object:
                     "description": f"Section from {source_file}",
                 }
             )
-            # Also link the section to the source document
             result["relationships"].append(
                 {
                     "source": source_file,
