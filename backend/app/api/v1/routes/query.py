@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from app.api.deps import get_db
+from app.api.deps import get_query_service
 from app.limiter import limiter
-from app.rag.query.query_pipeline import run_query
-from app.rag.query.streaming_query_pipeline import run_streaming_query
+from app.services.query_service import QueryService
 
 router = APIRouter(tags=["RAG"])
 
@@ -28,9 +27,9 @@ class QueryResponse(BaseModel):
 async def query_rag(
     request: Request,
     query_request: QueryRequest,
-    db=Depends(get_db),
+    service: QueryService = Depends(get_query_service),
 ):
-    return run_query(query_request.query, db)
+    return service.run_sync(query_request.query)
 
 
 @router.post("/query/stream")
@@ -38,32 +37,14 @@ async def query_rag(
 async def query_rag_stream(
     request: Request,
     query_request: QueryRequest,
-    db=Depends(get_db),
+    service: QueryService = Depends(get_query_service),
 ):
-    """
-    Streaming query endpoint using Server-Sent Events (SSE).
-    Returns tokens in real-time as they're generated.
-
-    Event types:
-    - status: Processing status updates
-    - sources: Retrieved source documents metadata
-    - token: Individual answer tokens
-    - done: Streaming complete
-    - error: Error occurred
-    """
-
-    graph = getattr(request.app.state, "graph", None)
-
     async def event_generator():
-        """Generate Server-Sent Events from the streaming pipeline."""
         try:
-            async for event in run_streaming_query(query_request.query, db, graph):
-                # Format as SSE: data: {json}\n\n
+            async for event in service.run_streaming(query_request.query):
                 yield f"data: {json.dumps(event)}\n\n"
-
         except Exception as e:
-            error_event = {"type": "error", "data": str(e)}
-            yield f"data: {json.dumps(error_event)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'data': str(e)})}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -71,6 +52,6 @@ async def query_rag_stream(
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "X-Accel-Buffering": "no",
         },
     )

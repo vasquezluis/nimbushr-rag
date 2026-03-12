@@ -11,7 +11,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from dotenv import load_dotenv
 from settings import settings
-from app.rag.ingest.ingest_pipeline import run_complete_ingestion_pipeline
+from app.infrastructure.factory import get_vector_store, get_graph_store
+from app.services.ingest_service import IngestService
 
 # Load environment variables
 load_dotenv()
@@ -46,7 +47,9 @@ def main():
     # Run the ingestion pipeline
     try:
         print("Starting ingestion...\n")
-        db = run_complete_ingestion_pipeline()
+        vector_store = get_vector_store()
+        graph_store = get_graph_store()
+        IngestService(vector_store, graph_store).run()
 
         print("\n" + "=" * 70)
         print("INGESTION COMPLETED SUCCESSFULLY")

@@ -1,5 +1,6 @@
 from fastapi import Request
+from app.services.query_service import QueryService
 
 
-def get_db(request: Request):
-    return request.app.state.db
+def get_query_service(request: Request) -> QueryService:
+    return request.app.state.query_service

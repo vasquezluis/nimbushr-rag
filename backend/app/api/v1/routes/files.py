@@ -8,8 +8,9 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from app.api.deps import get_query_service
+from app.services.query_service import QueryService
 
-from app.api.deps import get_db
 from app.settings import settings
 
 router = APIRouter(tags=["Files"])
@@ -35,7 +36,7 @@ class FilesListResponse(BaseModel):
 
 
 @router.get("/files", response_model=FilesListResponse)
-async def list_loaded_files(db=Depends(get_db)):
+async def list_loaded_files(service: QueryService = Depends(get_query_service)):
     """
     Get list of all files loaded into the vector store.
 
@@ -43,19 +44,13 @@ async def list_loaded_files(db=Depends(get_db)):
         FilesListResponse with file metadata and statistics
     """
     try:
-        # Get all documents from the collection
-        collection = db._collection
-
-        # Get all metadata (limit can be adjusted based on your needs)
-        all_data = collection.get(include=["metadatas"])
-
-        if not all_data or not all_data.get("metadatas"):
-            return FilesListResponse(files=[], total_files=0, total_chunks=0)
 
         # Aggregate data by source file
         files_dict = {}
 
-        for metadata in all_data["metadatas"]:
+        metadatas = service._vector_store.get_all_metadata()
+
+        for metadata in metadatas:
             source_file = metadata.get("source_file", "Unknown")
             source_type = metadata.get("source_type", "unknown")
 
@@ -87,7 +82,7 @@ async def list_loaded_files(db=Depends(get_db)):
         return FilesListResponse(
             files=files_list,
             total_files=len(files_list),
-            total_chunks=len(all_data["metadatas"]),
+            total_chunks=len(metadatas),
         )
 
     except Exception as e:
@@ -141,7 +136,9 @@ async def get_file(filename: str):
 
 
 @router.get("/files/{filename}/chunks")
-async def get_file_chunks(filename: str, db=Depends(get_db)):
+async def get_file_chunks(
+    filename: str, service: QueryService = Depends(get_query_service)
+):
     """
     Get all chunks for a specific file with their metadata.
     Useful for showing which parts of the document were used in RAG responses.
@@ -153,23 +150,11 @@ async def get_file_chunks(filename: str, db=Depends(get_db)):
         List of chunks with metadata for the specified file
     """
     try:
-        collection = db._collection
-
-        # Get all documents and filter by source_file
-        all_data = collection.get(
-            include=["metadatas", "documents"], where={"source_file": filename}
-        )
-
-        if not all_data or not all_data.get("metadatas"):
-            raise HTTPException(
-                status_code=404, detail=f"No chunks found for file: {filename}"
-            )
+        metadatas = service._vector_store.get_all_metadata()
 
         # Build response with chunk details
         chunks = []
-        for i, (doc, metadata) in enumerate(
-            zip(all_data["documents"], all_data["metadatas"])
-        ):
+        for i, (doc, metadata) in enumerate(metadatas):
             chunk_info = {
                 "chunk_index": metadata.get("chunk_index", i),
                 "content_preview": doc[:200] + "..." if len(doc) > 200 else doc,

@@ -8,6 +8,7 @@ Loads Excel files (.xlsx, .xls, .csv) into structured data for RAG ingestion.
 import csv
 from pathlib import Path
 from typing import Dict, List
+from app.settings import settings
 
 import openpyxl
 
@@ -62,13 +63,16 @@ def load_excel_file(file_path: Path) -> Dict[str, List[List]]:
         raise ValueError(f"Unsupported file type: {suffix}")
 
 
-def load_excel_files_from_directory(data_dir: Path) -> Dict[str, Dict[str, List[List]]]:
+def load_excel_files_from_directory() -> Dict[str, Dict[str, List[List]]]:
     """
     Load all Excel / CSV files in a directory.
 
     Returns:
         {filename: {sheet_name: [[row], ...]}}
     """
+
+    data_dir = settings.excel_data_dir
+
     extensions = ("*.xlsx", "*.xls", "*.csv")
     files = []
     for ext in extensions:

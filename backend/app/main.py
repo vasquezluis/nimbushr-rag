@@ -8,47 +8,48 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.routes import files, query
 from app.limiter import limiter
-from app.rag.graph.knowledge_graph import load_graph
-from app.rag.query.vector_store import load_vector_store
+from app.infrastructure.factory import get_vector_store, get_graph_store
+from app.services.query_service import QueryService
 
 load_dotenv()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Loading vector store at startup...")
-    app.state.db = load_vector_store()
+    print("Initializing vector store...")
+    vector_store = get_vector_store()
+    vector_store.load()
 
-    print("Loading knowledge graph at startup...")
-    app.state.graph = load_graph()
+    print("Initializing graph store...")
+    graph_store = get_graph_store()
+    graph_store.load()
+
+    # Wire the query service — routes only touch this, not raw stores
+    app.state.query_service = QueryService(
+        vector_store=vector_store,
+        graph_store=graph_store,
+    )
 
     yield
-
-    print("Shutting down application...")
+    print("Shutting down...")
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="RAG API",
-        version="1.0.2",
-        lifespan=lifespan,
-    )
+    app = FastAPI(title="RAG API", version="2.0.0", lifespan=lifespan)
 
-    # Rate limiter state and error handler
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # Configure CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "http://localhost:3000",  # Next.js default port
+            "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "http://localhost:3001",  # Alternative port
+            "http://localhost:3001",
         ],
         allow_credentials=True,
-        allow_methods=["*"],  # Allows all methods
-        allow_headers=["*"],  # Allows all headers
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     app.include_router(query.router, prefix="/api/v1")
@@ -58,7 +59,6 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
 
 if __name__ == "__main__":
     import uvicorn

@@ -126,6 +126,7 @@ def _parse_text(content: str, filename: str, max_chars: int) -> List[TextChunk]:
 
     return chunks
 
+
 def _parse_faq(content: str, filename: str, max_chars: int) -> List[TextChunk]:
     """
     Parse FAQ-style .txt files with Q:/A: patterns.
@@ -208,7 +209,11 @@ def _parse_faq(content: str, filename: str, max_chars: int) -> List[TextChunk]:
             # Collect continuation lines (indented or non-empty, non-Q lines)
             while i < len(lines):
                 next_line = lines[i].strip()
-                if not next_line or q_re.match(next_line) or section_re.match(next_line):
+                if (
+                    not next_line
+                    or q_re.match(next_line)
+                    or section_re.match(next_line)
+                ):
                     break
                 current_a_lines.append(next_line)
                 i += 1
@@ -228,8 +233,10 @@ def _parse_faq(content: str, filename: str, max_chars: int) -> List[TextChunk]:
 def _is_faq_file(content: str) -> bool:
     """Detect if a .txt file uses Q:/A: FAQ format."""
     import re
+
     qa_pairs = re.findall(r"^Q:\s.+", content, re.MULTILINE)
     return len(qa_pairs) >= 3  # at least 3 Q: lines = FAQ format
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -240,6 +247,7 @@ def load_text_file(file_path: Path) -> List[TextChunk]:
     """
     Load a single .txt or .md file and return a list of TextChunk objects.
     """
+
     suffix = file_path.suffix.lower()
     if suffix not in (".txt", ".md"):
         raise ValueError(f"Unsupported file type for text loader: {suffix}")
@@ -257,13 +265,16 @@ def load_text_file(file_path: Path) -> List[TextChunk]:
     return _parse_text(content, file_path.name, max_chars)
 
 
-def load_text_files_from_directory(data_dir: Path) -> Dict[str, List[TextChunk]]:
+def load_text_files_from_directory() -> Dict[str, List[TextChunk]]:
     """
     Load all .txt and .md files from *data/texts*.
 
     Returns:
         {filename: [TextChunk, ...]}
     """
+
+    data_dir = settings.text_data_dir
+
     files: List[Path] = []
     for ext in ("*.txt", "*.md"):
         files.extend(data_dir.glob(ext))

@@ -26,9 +26,7 @@ from langchain_core.documents import Document
 from app.rag.loaders.text_loader import TextChunk
 
 
-def create_text_documents(
-    file_chunks: Dict[str, List[TextChunk]],
-) -> List[Document]:
+def create_text_documents(chunks: List[TextChunk], filename: str) -> List[Document]:
     """
     Convert a mapping of {filename: [TextChunk]} into LangChain Documents.
 
@@ -41,33 +39,32 @@ def create_text_documents(
     documents: List[Document] = []
     global_chunk_index = 0
 
-    for filename, chunks in file_chunks.items():
-        file_stem = filename.rsplit(".", 1)[0]
+    file_stem = filename.rsplit(".", 1)[0]
 
-        for chunk in chunks:
-            metadata = {
-                # ── location (mirrors PDF / Excel keys) ──────────────────────
-                "chunk_index": global_chunk_index,
-                "page_number": chunk.page_number,
-                "section_title": chunk.section_title or file_stem,
-                # ── content type flags ────────────────────────────────────────
-                "has_tables": False,
-                "has_images": False,
-                "ai_summarized": False,
-                # ── source ───────────────────────────────────────────────────
-                "source_file": filename,
-                "source_type": chunk.source_type,  # "text" | "markdown"
-            }
+    for chunk in chunks:
+        metadata = {
+            # ── location (mirrors PDF / Excel keys) ──────────────────────
+            "chunk_index": global_chunk_index,
+            "page_number": chunk.page_number,
+            "section_title": chunk.section_title or file_stem,
+            # ── content type flags ────────────────────────────────────────
+            "has_tables": False,
+            "has_images": False,
+            "ai_summarized": False,
+            # ── source ───────────────────────────────────────────────────
+            "source_file": filename,
+            "source_type": chunk.source_type,  # "text" | "markdown"
+        }
 
-            # Prepend section title so the embedding captures the topic
-            titled_content = (
-                f"{chunk.section_title}\n\n{chunk.text}"
-                if chunk.section_title
-                else chunk.text
-            )
-            documents.append(Document(page_content=titled_content, metadata=metadata))
+        # Prepend section title so the embedding captures the topic
+        titled_content = (
+            f"{chunk.section_title}\n\n{chunk.text}"
+            if chunk.section_title
+            else chunk.text
+        )
+        documents.append(Document(page_content=titled_content, metadata=metadata))
 
-            global_chunk_index += 1
+        global_chunk_index += 1
 
         print(f"  Created {len(chunks)} chunk(s) from {filename}")
 

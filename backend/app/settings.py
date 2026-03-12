@@ -92,6 +92,12 @@ class Settings(BaseSettings):
     chroma_distance_metric: str = "cosine"  # Options: "cosine", "l2", "ip"
 
     # ======================
+    # Backend Selectors
+    # ======================
+    vector_store_backend: str = "chroma"   # options: "chroma", "postgres"
+    graph_store_backend: str = "networkx"  # options: "networkx", "neo4j"
+
+    # ======================
     # Pydantic Config
     # ======================
     model_config = SettingsConfigDict(
