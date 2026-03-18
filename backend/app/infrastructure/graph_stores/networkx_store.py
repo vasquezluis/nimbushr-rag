@@ -65,3 +65,14 @@ class NetworkXGraphStore:
         """Expose raw graph for components that still need it (hybrid retriever)."""
 
         return self._graph
+
+    def is_specific_match(
+        self, chunk_index: int, specificity_threshold: int = 3
+    ) -> bool:
+        if self._graph is None:
+            return False
+        for _, data in self._graph.nodes(data=True):
+            node_chunks = data.get("chunk_indices", [])
+            if chunk_index in node_chunks and len(node_chunks) <= specificity_threshold:
+                return True
+        return False

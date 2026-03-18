@@ -35,3 +35,12 @@ class GraphStoreProtocol(Protocol):
         Returns True if successful, False if no graph exists yet.
         """
         ...
+
+    def is_specific_match(
+        self, chunk_index: int, specificity_threshold: int = 3
+    ) -> bool:
+        """
+        Return True if chunk_index belongs to a small/specific node.
+        Backends that don't support this concept should return False.
+        """
+        ...
