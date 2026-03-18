@@ -3,7 +3,6 @@ from typing import Any, AsyncGenerator, Dict
 from app.core.interfaces.vector_store import VectorStoreProtocol
 from app.core.interfaces.graph_store import GraphStoreProtocol
 from app.core.models import Chunk, HybridRetrievalResult
-from app.infrastructure.graph_stores.networkx_store import NetworkXGraphStore
 from app.rag.query.streaming_query_engine import rerank_chunks_async, stream_answer
 from app.settings import settings
 from langchain_core.documents import Document

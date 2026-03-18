@@ -37,7 +37,7 @@ class VectorStoreProtocol(Protocol):
         """
         ...
 
-    def get_all_chunks(self) -> list[tuple[str, dict]]:
+    def get_all_metadata(self) -> list[tuple[str, dict]]:
         """
         Return raw metadata dicts for every stored chunk.
         Used by the /files endpoint to build file listings.
