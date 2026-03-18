@@ -13,3 +13,10 @@ class Neo4jGraphStore:
 
     def retrieve(self, query: str, max_chunks: int) -> tuple[list[int], list[dict]]:
         raise NotImplementedError
+
+    def is_specific_match(
+        self, chunk_index: int, specificity_threshold: int = 3
+    ) -> bool:
+        # Neo4j Cypher equivalent: MATCH (n) WHERE $idx IN n.chunk_indices
+        # AND size(n.chunk_indices) <= $threshold RETURN count(n) > 0
+        return False  # or real implementation

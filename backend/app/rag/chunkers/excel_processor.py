@@ -68,7 +68,6 @@ def chunk_excel_sheets(
         List of (page_content, metadata) tuples ready for Document creation.
     """
     results: List[Tuple[str, dict]] = []
-    global_chunk_index = 0
 
     for sheet_index, (sheet_name, rows) in enumerate(sheets.items(), start=1):
         if not rows:
@@ -85,13 +84,11 @@ def chunk_excel_sheets(
                 filename=filename,
                 sheet_name=sheet_name,
                 sheet_index=sheet_index,
-                chunk_index=global_chunk_index,
                 row_start=1,
                 row_end=1,
                 total_rows=0,
             )
             results.append((text, metadata))
-            global_chunk_index += 1
             continue
 
         # Split data rows into batches
@@ -107,13 +104,11 @@ def chunk_excel_sheets(
                 filename=filename,
                 sheet_name=sheet_name,
                 sheet_index=sheet_index,
-                chunk_index=global_chunk_index,
                 row_start=row_start,
                 row_end=row_end,
                 total_rows=len(data_rows),
             )
             results.append((text, metadata))
-            global_chunk_index += 1
 
     return results
 
@@ -122,14 +117,12 @@ def _build_metadata(
     filename: str,
     sheet_name: str,
     sheet_index: int,
-    chunk_index: int,
     row_start: int,
     row_end: int,
     total_rows: int,
 ) -> dict:
     return {
         # ── location (mirrors PDF metadata keys) ──────────────────────────────
-        "chunk_index": chunk_index,
         "page_number": sheet_index,  # "page" == sheet
         "section_title": f"{filename} › {sheet_name}",
         # ── content type flags ────────────────────────────────────────────────

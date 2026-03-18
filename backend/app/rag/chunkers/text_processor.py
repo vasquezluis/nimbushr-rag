@@ -37,14 +37,12 @@ def create_text_documents(chunks: List[TextChunk], filename: str) -> List[Docume
         List of LangChain Document objects ready for the vector store.
     """
     documents: List[Document] = []
-    global_chunk_index = 0
 
     file_stem = filename.rsplit(".", 1)[0]
 
     for chunk in chunks:
         metadata = {
             # ── location (mirrors PDF / Excel keys) ──────────────────────
-            "chunk_index": global_chunk_index,
             "page_number": chunk.page_number,
             "section_title": chunk.section_title or file_stem,
             # ── content type flags ────────────────────────────────────────
@@ -64,8 +62,6 @@ def create_text_documents(chunks: List[TextChunk], filename: str) -> List[Docume
         )
         documents.append(Document(page_content=titled_content, metadata=metadata))
 
-        global_chunk_index += 1
-
-        print(f"  Created {len(chunks)} chunk(s) from {filename}")
+    print(f"  Created {len(chunks)} chunk(s) from {filename}")
 
     return documents

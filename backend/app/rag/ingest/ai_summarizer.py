@@ -153,7 +153,6 @@ def summarise_chunks(chunks) -> List[Document]:
         # Build optimized metadata - keeping only essential fields
         metadata = {
             # Document Location (Essential for citations)
-            "chunk_index": i,
             "page_number": page_number,
             "section_title": section_title or "Unknown Section",
             # Content Type Flags (Useful for filtering/display)

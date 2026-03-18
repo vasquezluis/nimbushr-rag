@@ -3,7 +3,6 @@ from typing import Any, AsyncGenerator, Dict
 from app.core.interfaces.vector_store import VectorStoreProtocol
 from app.core.interfaces.graph_store import GraphStoreProtocol
 from app.core.models import Chunk, HybridRetrievalResult
-from app.infrastructure.graph_stores.networkx_store import NetworkXGraphStore
 from app.rag.query.streaming_query_engine import rerank_chunks_async, stream_answer
 from app.settings import settings
 from langchain_core.documents import Document
@@ -141,7 +140,7 @@ class QueryService:
                 if chunk:
                     if chunk.source_file not in vector_source_files:
                         scores[idx] = scores.get(idx, 0) + 1
-                    elif self._is_specific_graph_match(idx):
+                    elif self._graph_store.is_specific_match(idx):
                         scores[idx] = scores.get(idx, 0) + 1
                     # else score stays 0 → excluded
 
@@ -163,26 +162,10 @@ class QueryService:
     def _is_specific_graph_match(
         self, chunk_idx: int, specificity_threshold: int = 3
     ) -> bool:
-        """True if this chunk belongs to a small/specific graph node."""
-        # Only NetworkX exposes raw graph; other backends can override if needed
-
-        if isinstance(self._graph_store, NetworkXGraphStore):
-            graph = self._graph_store.graph
-
-            if graph is None:
-
-                return False
-            for _, data in graph.nodes(data=True):
-
-                node_chunks = data.get("chunk_indices", [])
-
-                if (
-                    chunk_idx in node_chunks
-                    and len(node_chunks) <= specificity_threshold
-                ):
-
-                    return True
-        return False
+        """
+        Delegates to the graph store backend — no concrete type knowledge needed.
+        """
+        return self._graph_store.is_specific_match(chunk_idx, specificity_threshold)
 
     @staticmethod
     def _to_langchain_docs(chunks: list[Chunk]) -> list[Document]:
